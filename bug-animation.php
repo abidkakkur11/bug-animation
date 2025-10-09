@@ -1,20 +1,21 @@
 <?php
 /*
 Plugin Name: Bug Animation
-Plugin URI: https://wordpress.org/plugins/bug-animation/
+Plugin URI: https://github.com/abidkakkur11/Bug-Animation
 Description: Displays animated flies buzzing across the screen for a fun visual effect.
 Version: 1.0.0
 Author: abidkp11
 Author URI: https://profiles.wordpress.org/abidkp11/
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Text Domain: bug-animation
+Text Domain: Bug-Animation
 */
 
 // Enqueue necessary scripts and styles
 function bug_animation_enqueue_scripts() {
-    // Only enqueue scripts if the feature is enabled
-    if (get_option('bug_animation_enabled')) {
+    // Only enqueue scripts if the feature is enabled AND we're on a singular post/page (includes custom post types)
+    // This prevents loading the script in archives, the homepage, or other non-singular contexts.
+    if (get_option('bug_animation_enabled') && is_singular()) {
         // Use the file modification time as the script version so browsers bust cache when the file changes.
         $script_path = plugin_dir_path(__FILE__) . 'js/bug-min.js';
         $script_url  = plugin_dir_url(__FILE__) . 'js/bug-min.js';
@@ -152,3 +153,5 @@ function bug_animation_options_page() {
     <p>If you found this plugin is usefull please do <a href="#">Support</a></p>
     <?php
 }
+
+// ...existing code...

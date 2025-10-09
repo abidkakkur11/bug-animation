@@ -8,6 +8,8 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
+Bug Animation adds animated flies that buzz across your WordPress site for a playful visual effect.
+
 == Description ==
 🐝 Add a quirky visual effect to your WordPress site! Bug Animation displays animated flies buzzing across the screen. Great for prank pages, seasonal fun, or just adding a bit of unexpected motion.
 
