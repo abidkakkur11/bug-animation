@@ -1,23 +1,33 @@
 <?php
 /*
 Plugin Name: Bug Animation
-Description: Adds bug animations to your website with customizable options.
-Version: 1.0
-Author: Abid KP
-Author URI:        https://abidkp.com/
+Plugin URI: https://wordpress.org/plugins/bug-animation/
+Description: Displays animated flies buzzing across the screen for a fun visual effect.
+Version: 1.0.0
+Author: abidkp11
+Author URI: https://profiles.wordpress.org/abidkp11/
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: bug-animation
 */
 
 // Enqueue necessary scripts and styles
 function bug_animation_enqueue_scripts() {
     // Only enqueue scripts if the feature is enabled
     if (get_option('bug_animation_enabled')) {
-        wp_enqueue_script('bug-min-js', plugin_dir_url(__FILE__) . 'js/bug-min.js', array('jquery'), null, true);
+        // Use the file modification time as the script version so browsers bust cache when the file changes.
+        $script_path = plugin_dir_path(__FILE__) . 'js/bug-min.js';
+        $script_url  = plugin_dir_url(__FILE__) . 'js/bug-min.js';
+        // Fallback to the plugin header version if the file doesn't exist for some reason.
+        $fallback_version = '1.0';
+        $script_version = (file_exists($script_path) ? filemtime($script_path) : $fallback_version);
 
+        wp_enqueue_script('bug-min-js', $script_url, array('jquery'), $script_version, true);
 
-    // Pass the plugin directory URL to the JavaScript file
-    wp_localize_script('bug-min-js', 'siteData', array(
-        'pluginUrl' => plugin_dir_url(__FILE__) // This will pass the plugin URL to JavaScript
-    ));
+        // Pass the plugin directory URL to the JavaScript file
+        wp_localize_script('bug-min-js', 'siteData', array(
+            'pluginUrl' => plugin_dir_url(__FILE__) // This will pass the plugin URL to JavaScript
+        ));
 
         // Get user-defined options from the settings
         $minBugs = get_option('bug_min_bugs', 10);
@@ -58,7 +68,7 @@ function bug_animation_settings_init() {
     add_settings_section(
         'bug_animation_section',
         'Bug Animation Settings',
-        null,
+        '__return_false',
         'bug_animation'
     );
 
