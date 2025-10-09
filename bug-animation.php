@@ -8,7 +8,7 @@ Author: abidkp11
 Author URI: https://profiles.wordpress.org/abidkp11/
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Text Domain: Bug-Animation
+Text Domain: bug-animation
 */
 
 // Enqueue necessary scripts and styles
@@ -61,10 +61,30 @@ add_action('admin_menu', 'bug_animation_add_admin_menu');
 
 // Register plugin settings
 function bug_animation_settings_init() {
-    register_setting('bug_animation_options', 'bug_animation_enabled');
-    register_setting('bug_animation_options', 'bug_min_bugs');
-    register_setting('bug_animation_options', 'bug_max_bugs');
-    register_setting('bug_animation_options', 'bug_mouse_over');
+    // Register settings with sanitization callbacks to ensure stored values are safe.
+    register_setting(
+        'bug_animation_options',
+        'bug_animation_enabled',
+        array( 'sanitize_callback' => 'bug_animation_sanitize_enabled' )
+    );
+
+    register_setting(
+        'bug_animation_options',
+        'bug_min_bugs',
+        array( 'sanitize_callback' => 'bug_animation_sanitize_positive_int' )
+    );
+
+    register_setting(
+        'bug_animation_options',
+        'bug_max_bugs',
+        array( 'sanitize_callback' => 'bug_animation_sanitize_positive_int' )
+    );
+
+    register_setting(
+        'bug_animation_options',
+        'bug_mouse_over',
+        array( 'sanitize_callback' => 'bug_animation_sanitize_mouse_over' )
+    );
 
     add_settings_section(
         'bug_animation_section',
@@ -107,6 +127,32 @@ function bug_animation_settings_init() {
 }
 add_action('admin_init', 'bug_animation_settings_init');
 
+/**
+ * Sanitization callbacks for plugin settings
+ */
+function bug_animation_sanitize_enabled($value) {
+    // Expect a truthy value (checkbox). Store as 1 or 0.
+    return ($value) ? 1 : 0;
+}
+
+function bug_animation_sanitize_positive_int($value) {
+    $val = intval($value);
+    if ($val < 0) {
+        $val = 0;
+    }
+    return $val;
+}
+
+function bug_animation_sanitize_mouse_over($value) {
+    $allowed = array('random', 'fly', 'flyoff', 'nothing', 'die');
+    $value = sanitize_text_field($value);
+    if (in_array($value, $allowed, true)) {
+        return $value;
+    }
+    // default
+    return 'random';
+}
+
 // Render the toggle option for enabling the bug animation
 function bug_animation_enabled_render() {
     $enabled = get_option('bug_animation_enabled', false);
@@ -133,9 +179,29 @@ function bug_max_bugs_render() {
 
 // Render the input field for mouse over action
 function bug_mouse_over_render() {
-    $mouseOver = get_option('bug_mouse_over', 'die');
+    $mouseOver = get_option('bug_mouse_over', 'random');
+    // map of value => human-friendly label
+    $allowed = array(
+        'random'  => 'Random (varied behavior)',
+        'fly'     => 'Fly (bug moves away)',
+        'flyoff'  => 'Fly Off (bug exits screen)',
+        'nothing' => 'Nothing (no reaction)',
+        'die'     => 'Die (bug disappears)'
+    );
     ?>
-    <input type="text" name="bug_mouse_over" value="<?php echo esc_attr($mouseOver); ?>" /><span> random / fly / flyoff / nothing / die </span> <p>(use any of these. Default is "random")</p>
+    <select name="bug_mouse_over">
+        <?php foreach ($allowed as $value => $label) : ?>
+            <option value="<?php echo esc_attr($value); ?>" <?php selected($mouseOver, $value); ?>><?php echo esc_html($label); ?></option>
+        <?php endforeach; ?>
+    </select>
+    <p class="description">When a user moves their mouse over a bug, choose how the bug should react. Use "Random" for varied behaviors.</p>
+    <ul>
+        <li><strong>Random</strong> — The plugin chooses an action per interaction.</li>
+        <li><strong>Fly</strong> — The bug quickly moves away from the cursor.</li>
+        <li><strong>Fly Off</strong> — The bug flies off the screen.</li>
+        <li><strong>Nothing</strong> — No reaction on mouse over.</li>
+        <li><strong>Die</strong> — The bug disappears (simulates being squashed).</li>
+    </ul>
     <?php
 }
 

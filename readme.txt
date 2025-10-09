@@ -2,7 +2,7 @@
 Contributors: abidkp11
 Tags: animation, bugs, fly, screen effects, visual effects
 Requires at least: 5.0
-Tested up to: 6.8.3
+Tested up to: 6.8
 Requires PHP: 7.2
 Stable tag: 1.0.0
 License: GPLv2 or later
