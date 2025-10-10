@@ -3,7 +3,7 @@
 Plugin Name: Bug Animation
 Plugin URI: https://github.com/abidkakkur11/Bug-Animation
 Description: Displays animated flies buzzing across the screen for a fun visual effect.
-Version: 1.0.0
+Version: 1.0.1
 Author: abidkp11
 Author URI: https://profiles.wordpress.org/abidkp11/
 License: GPLv2 or later
