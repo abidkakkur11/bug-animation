@@ -165,13 +165,13 @@ function bug_animation_enabled_render() {
 function bug_min_bugs_render() {
     $minBugs = get_option('bug_min_bugs', 10);
     ?>
-    <input type="number" name="bug_min_bugs" value="<?php echo esc_attr($minBugs); ?>" /><span> Minumum number of bugs to show. (default: 1)</span>
+    <input type="number" name="bug_min_bugs" value="<?php echo esc_attr($minBugs); ?>" /><span> Minumum number of bugs to show. (default: 10)</span>
     <?php
 }
 
 // Render the input field for maximum bugs
 function bug_max_bugs_render() {
-    $maxBugs = get_option('bug_max_bugs', 30);
+    $maxBugs = get_option('bug_max_bugs', 20);
     ?>
     <input type="number" name="bug_max_bugs" value="<?php echo esc_attr($maxBugs); ?>" /><span> Maximum number of bugs to show. (default: 20)</span>
     <?php
@@ -184,9 +184,9 @@ function bug_mouse_over_render() {
     $allowed = array(
         'random'  => 'Random (varied behavior)',
         'fly'     => 'Fly (bug moves away)',
-        'flyoff'  => 'Fly Off (bug exits screen)',
+        'flyoff'  => 'Fly Off (bug exits the screen)',
         'nothing' => 'Nothing (no reaction)',
-        'die'     => 'Die (bug disappears)'
+        'die'     => 'Die (bug falls)'
     );
     ?>
     <select name="bug_mouse_over">
@@ -200,7 +200,7 @@ function bug_mouse_over_render() {
         <li><strong>Fly</strong> — The bug quickly moves away from the cursor.</li>
         <li><strong>Fly Off</strong> — The bug flies off the screen.</li>
         <li><strong>Nothing</strong> — No reaction on mouse over.</li>
-        <li><strong>Die</strong> — The bug disappears (simulates being squashed).</li>
+        <li><strong>Die</strong> — The bug falls.</li>
     </ul>
     <?php
 }
@@ -209,14 +209,13 @@ function bug_mouse_over_render() {
 function bug_animation_options_page() {
     ?>
     <form action="options.php" method="post">
-        <h1>Bug Animation Settings</h1>
         <?php
         settings_fields('bug_animation_options');
         do_settings_sections('bug_animation');
         submit_button();
         ?>
     </form>
-    <p>If you found this plugin is usefull please do <a href="#">Support</a></p>
+    <p>If you found this plugin is usefull please do <a href="https://www.paypal.com/paypalme/ABIDKP211">Support</a></p>
     <?php
 }
 

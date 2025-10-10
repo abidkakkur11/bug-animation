@@ -32,7 +32,6 @@ Bug Animation adds animated flies that buzz across your WordPress site for a pla
 = 1.0.0 =
 * Initial release with fly animations
 * Settings panel added
-* Mobile toggle option
 
 == Upgrade Notice ==
 = 1.0.0 =
