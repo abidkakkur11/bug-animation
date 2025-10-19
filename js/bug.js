@@ -7,6 +7,16 @@
  * Released under MIT-style license.
  * Original Screen Bug http://screen-bug.googlecode.com/git/index.html
  */
+
+if (typeof bugAnimationData !== "undefined") {
+    // Build the full path to the image in the plugin directory
+    var flySpritePath = bugAnimationData.pluginUrl + "images/fly-sprite.png";
+
+    // Example of how you can use this path in your code
+    var flySprite = new Image();
+    flySprite.src = flySpritePath;
+}
+
 /**
  * Bug.js - Add bugs to your page
  *

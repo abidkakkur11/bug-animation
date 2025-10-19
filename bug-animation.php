@@ -12,10 +12,10 @@ Text Domain: bug-animation
 */
 
 // Enqueue necessary scripts and styles
-function bug_animation_enqueue_scripts() {
+function buganimation_enqueue_scripts() {
     // Only enqueue scripts if the feature is enabled AND we're on a singular post/page (includes custom post types)
     // This prevents loading the script in archives, the homepage, or other non-singular contexts.
-    if (get_option('bug_animation_enabled') && is_singular()) {
+    if (get_option('buganimation_enabled') && is_singular()) {
         // Use the file modification time as the script version so browsers bust cache when the file changes.
         $script_path = plugin_dir_path(__FILE__) . 'js/bug-min.js';
         $script_url  = plugin_dir_url(__FILE__) . 'js/bug-min.js';
@@ -23,119 +23,123 @@ function bug_animation_enqueue_scripts() {
         $fallback_version = '1.0';
         $script_version = (file_exists($script_path) ? filemtime($script_path) : $fallback_version);
 
-        wp_enqueue_script('bug-min-js', $script_url, array('jquery'), $script_version, true);
+        wp_enqueue_script('buganimation-js', $script_url, array('jquery'), $script_version, true);
 
         // Pass the plugin directory URL to the JavaScript file
-        wp_localize_script('bug-min-js', 'siteData', array(
+        wp_localize_script('buganimation-js', 'bugAnimationData', array(
             'pluginUrl' => plugin_dir_url(__FILE__) // This will pass the plugin URL to JavaScript
         ));
 
         // Get user-defined options from the settings
-        $minBugs = get_option('bug_min_bugs', 10);
-        $maxBugs = get_option('bug_max_bugs', 30);
-        $mouseOverAction = get_option('bug_mouse_over', 'die');
+        $minBugs = get_option('buganimation_min_bugs', 10);
+        $maxBugs = get_option('buganimation_max_bugs', 30);
+        $mouseOverAction = get_option('buganimation_mouse_over', 'die');
 
         // Inline script to initialize the BugController with settings
-        wp_add_inline_script('bug-min-js', "
+        wp_add_inline_script('buganimation-js', sprintf("
             new BugController({
-                minBugs: $minBugs,
-                maxBugs: $maxBugs,
-                mouseOver: '$mouseOverAction'
+                minBugs: %d,
+                maxBugs: %d,
+                mouseOver: %s
             });
-        ");
+        ", 
+            absint($minBugs),
+            absint($maxBugs),
+            wp_json_encode($mouseOverAction)
+        ));
     }
 }
-add_action('wp_enqueue_scripts', 'bug_animation_enqueue_scripts');
+add_action('wp_enqueue_scripts', 'buganimation_enqueue_scripts');
 
 // Add a settings page to the admin menu
-function bug_animation_add_admin_menu() {
+function buganimation_add_admin_menu() {
     add_options_page(
         'Bug Animation Settings',
         'Bug Animation',
         'manage_options',
-        'bug-animation',
-        'bug_animation_options_page'
+        'buganimation-settings',
+        'buganimation_options_page'
     );
 }
-add_action('admin_menu', 'bug_animation_add_admin_menu');
+add_action('admin_menu', 'buganimation_add_admin_menu');
 
 // Register plugin settings
-function bug_animation_settings_init() {
+function buganimation_settings_init() {
     // Register settings with sanitization callbacks to ensure stored values are safe.
     register_setting(
-        'bug_animation_options',
-        'bug_animation_enabled',
-        array( 'sanitize_callback' => 'bug_animation_sanitize_enabled' )
+        'buganimation_options',
+        'buganimation_enabled',
+        array( 'sanitize_callback' => 'buganimation_sanitize_enabled' )
     );
 
     register_setting(
-        'bug_animation_options',
-        'bug_min_bugs',
-        array( 'sanitize_callback' => 'bug_animation_sanitize_positive_int' )
+        'buganimation_options',
+        'buganimation_min_bugs',
+        array( 'sanitize_callback' => 'buganimation_sanitize_positive_int' )
     );
 
     register_setting(
-        'bug_animation_options',
-        'bug_max_bugs',
-        array( 'sanitize_callback' => 'bug_animation_sanitize_positive_int' )
+        'buganimation_options',
+        'buganimation_max_bugs',
+        array( 'sanitize_callback' => 'buganimation_sanitize_positive_int' )
     );
 
     register_setting(
-        'bug_animation_options',
-        'bug_mouse_over',
-        array( 'sanitize_callback' => 'bug_animation_sanitize_mouse_over' )
+        'buganimation_options',
+        'buganimation_mouse_over',
+        array( 'sanitize_callback' => 'buganimation_sanitize_mouse_over' )
     );
 
     add_settings_section(
-        'bug_animation_section',
+        'buganimation_section',
         'Bug Animation Settings',
         '__return_false',
-        'bug_animation'
+        'buganimation-settings'
     );
 
     add_settings_field(
-        'bug_animation_enabled',
+        'buganimation_enabled',
         'Enable Bug Animation',
-        'bug_animation_enabled_render',
-        'bug_animation',
-        'bug_animation_section'
+        'buganimation_enabled_render',
+        'buganimation-settings',
+        'buganimation_section'
     );
 
     add_settings_field(
-        'bug_min_bugs',
+        'buganimation_min_bugs',
         'Minimum Bugs',
-        'bug_min_bugs_render',
-        'bug_animation',
-        'bug_animation_section'
+        'buganimation_min_bugs_render',
+        'buganimation-settings',
+        'buganimation_section'
     );
 
     add_settings_field(
-        'bug_max_bugs',
+        'buganimation_max_bugs',
         'Maximum Bugs',
-        'bug_max_bugs_render',
-        'bug_animation',
-        'bug_animation_section'
+        'buganimation_max_bugs_render',
+        'buganimation-settings',
+        'buganimation_section'
     );
 
     add_settings_field(
-        'bug_mouse_over',
+        'buganimation_mouse_over',
         'Mouse Over Action',
-        'bug_mouse_over_render',
-        'bug_animation',
-        'bug_animation_section'
+        'buganimation_mouse_over_render',
+        'buganimation-settings',
+        'buganimation_section'
     );
 }
-add_action('admin_init', 'bug_animation_settings_init');
+add_action('admin_init', 'buganimation_settings_init');
 
 /**
  * Sanitization callbacks for plugin settings
  */
-function bug_animation_sanitize_enabled($value) {
+function buganimation_sanitize_enabled($value) {
     // Expect a truthy value (checkbox). Store as 1 or 0.
     return ($value) ? 1 : 0;
 }
 
-function bug_animation_sanitize_positive_int($value) {
+function buganimation_sanitize_positive_int($value) {
     $val = intval($value);
     if ($val < 0) {
         $val = 0;
@@ -143,7 +147,7 @@ function bug_animation_sanitize_positive_int($value) {
     return $val;
 }
 
-function bug_animation_sanitize_mouse_over($value) {
+function buganimation_sanitize_mouse_over($value) {
     $allowed = array('random', 'fly', 'flyoff', 'nothing', 'die');
     $value = sanitize_text_field($value);
     if (in_array($value, $allowed, true)) {
@@ -154,32 +158,32 @@ function bug_animation_sanitize_mouse_over($value) {
 }
 
 // Render the toggle option for enabling the bug animation
-function bug_animation_enabled_render() {
-    $enabled = get_option('bug_animation_enabled', false);
+function buganimation_enabled_render() {
+    $enabled = get_option('buganimation_enabled', false);
     ?>
-    <input type="checkbox" name="bug_animation_enabled" value="1" <?php checked(1, $enabled, true); ?> />
+    <input type="checkbox" name="buganimation_enabled" value="1" <?php checked(1, $enabled, true); ?> />
     <?php
 }
 
 // Render the input field for minimum bugs
-function bug_min_bugs_render() {
-    $minBugs = get_option('bug_min_bugs', 10);
+function buganimation_min_bugs_render() {
+    $minBugs = get_option('buganimation_min_bugs', 10);
     ?>
-    <input type="number" name="bug_min_bugs" value="<?php echo esc_attr($minBugs); ?>" /><span> Minumum number of bugs to show. (default: 10)</span>
+    <input type="number" name="buganimation_min_bugs" value="<?php echo esc_attr($minBugs); ?>" /><span> Minumum number of bugs to show. (default: 10)</span>
     <?php
 }
 
 // Render the input field for maximum bugs
-function bug_max_bugs_render() {
-    $maxBugs = get_option('bug_max_bugs', 20);
+function buganimation_max_bugs_render() {
+    $maxBugs = get_option('buganimation_max_bugs', 20);
     ?>
-    <input type="number" name="bug_max_bugs" value="<?php echo esc_attr($maxBugs); ?>" /><span> Maximum number of bugs to show. (default: 20)</span>
+    <input type="number" name="buganimation_max_bugs" value="<?php echo esc_attr($maxBugs); ?>" /><span> Maximum number of bugs to show. (default: 20)</span>
     <?php
 }
 
 // Render the input field for mouse over action
-function bug_mouse_over_render() {
-    $mouseOver = get_option('bug_mouse_over', 'random');
+function buganimation_mouse_over_render() {
+    $mouseOver = get_option('buganimation_mouse_over', 'random');
     // map of value => human-friendly label
     $allowed = array(
         'random'  => 'Random (varied behavior)',
@@ -189,7 +193,7 @@ function bug_mouse_over_render() {
         'die'     => 'Die (bug falls)'
     );
     ?>
-    <select name="bug_mouse_over">
+    <select name="buganimation_mouse_over">
         <?php foreach ($allowed as $value => $label) : ?>
             <option value="<?php echo esc_attr($value); ?>" <?php selected($mouseOver, $value); ?>><?php echo esc_html($label); ?></option>
         <?php endforeach; ?>
@@ -206,12 +210,12 @@ function bug_mouse_over_render() {
 }
 
 // Display the plugin's settings page
-function bug_animation_options_page() {
+function buganimation_options_page() {
     ?>
     <form action="options.php" method="post">
         <?php
-        settings_fields('bug_animation_options');
-        do_settings_sections('bug_animation');
+        settings_fields('buganimation_options');
+        do_settings_sections('buganimation-settings');
         submit_button();
         ?>
     </form>

@@ -3,9 +3,9 @@
  Released under MIT-style license.
  Original Screen Bug http://screen-bug.googlecode.com/git/index.html
 */
-if (typeof siteData !== "undefined") {
+if (typeof bugAnimationData !== "undefined") {
   // Build the full path to the image in the plugin directory
-  var flySpritePath = siteData.pluginUrl + "images/fly-sprite.png";
+  var flySpritePath = bugAnimationData.pluginUrl + "images/fly-sprite.png";
 
   // Example of how you can use this path in your code
   var flySprite = new Image();
