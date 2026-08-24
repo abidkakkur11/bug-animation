@@ -181,7 +181,7 @@ function buganimation_settings_init() {
     );
 
     register_setting( 'buganimation_options', 'buganimation_display_condition', array( 'sanitize_callback' => 'buganimation_sanitize_display_condition' ) );
-    register_setting( 'buganimation_options', 'buganimation_selected_post_types', array( 'sanitize_callback' => 'buganimation_sanitize_array_of_strings' ) );
+    register_setting( 'buganimation_options', 'buganimation_selected_post_types', array( 'sanitize_callback' => 'buganimation_sanitize_selected_post_types' ) );
     register_setting( 'buganimation_options', 'buganimation_selected_posts', array( 'sanitize_callback' => 'buganimation_sanitize_array_of_strings' ) );
     register_setting( 'buganimation_options', 'buganimation_schedule_days', array( 'sanitize_callback' => 'buganimation_sanitize_schedule_days' ) );
     register_setting( 'buganimation_options', 'buganimation_schedule_start_date', array( 'sanitize_callback' => 'sanitize_text_field' ) );
@@ -350,6 +350,36 @@ function buganimation_sanitize_schedule_days($value) {
         return $value;
     }
     return 'always';
+}
+
+/**
+ * Sanitization callback for the selected post types setting.
+ * Enforces that at least one post type is chosen when the display condition requires it.
+ *
+ * @param mixed $value The submitted value.
+ * @return array Sanitized array, or the previous stored value on validation failure.
+ */
+function buganimation_sanitize_selected_post_types( $value ) {
+    $sanitized = is_array( $value ) ? array_map( 'sanitize_text_field', $value ) : array();
+    $sanitized = array_filter( $sanitized ); // Remove any empty entries.
+
+    // If the user chose "Specific Post Types", at least one must be selected.
+    $condition = isset( $_POST['buganimation_display_condition'] )
+        ? sanitize_text_field( wp_unslash( $_POST['buganimation_display_condition'] ) )
+        : '';
+
+    if ( 'specific_post_types' === $condition && empty( $sanitized ) ) {
+        add_settings_error(
+            'buganimation_selected_post_types',
+            'buganimation_empty_post_types',
+            esc_html__( 'Please select at least one post type when "Specific Post Types" is chosen as the display condition.', 'bug-animation' ),
+            'error'
+        );
+        // Return the existing stored value so nothing is wiped.
+        return get_option( 'buganimation_selected_post_types', array() );
+    }
+
+    return array_values( $sanitized );
 }
 
 /**
@@ -684,7 +714,13 @@ function buganimation_admin_enqueue_scripts($hook) {
     wp_enqueue_script( 'select2-js', plugin_dir_url( __FILE__ ) . 'js/select2.min.js', array( 'jquery' ), $select2_js_ver, true );
     
     // Inject the inline logic
-    wp_localize_script('select2-js', 'bugAnimationAdmin', array('nonce' => wp_create_nonce('buganimation_search')));
+    wp_localize_script( 'select2-js', 'bugAnimationAdmin', array(
+        'nonce'          => wp_create_nonce( 'buganimation_search' ),
+        'i18n'           => array(
+            'emptyPostTypes' => esc_html__( 'Please select at least one post type before saving.', 'bug-animation' ),
+            'emptyItems'     => esc_html__( 'Please select at least one item before saving.', 'bug-animation' ),
+        ),
+    ) );
     wp_add_inline_script('select2-js', "
         jQuery(document).ready(function($) {
             // Initialize Basic Select2 for Post Types
@@ -749,6 +785,60 @@ function buganimation_admin_enqueue_scripts($hook) {
             
             $('#buganimation_display_condition, select[name=\"buganimation_schedule_days\"]').on('change', toggleFields);
             toggleFields(); // run on load
+
+            // ── Form validation ──────────────────────────────────────────────
+            function showInlineError($field, message) {
+                // Remove any previous inline error for this field.
+                $field.closest('tr').find('.buganimation-field-error').remove();
+                var $err = $('<p class="buganimation-field-error" style="color:#d63638; font-weight:600; margin-top:6px;"></p>').text(message);
+                $field.closest('td').append($err);
+                // Highlight the select2 container.
+                $field.next('.select2-container').find('.select2-selection').css('border-color', '#d63638');
+                $('html, body').animate({ scrollTop: $err.offset().top - 120 }, 300);
+            }
+
+            function clearInlineError($field) {
+                $field.closest('tr').find('.buganimation-field-error').remove();
+                $field.next('.select2-container').find('.select2-selection').css('border-color', '');
+            }
+
+            $('form[action=\"options.php\"]').on('submit', function(e) {
+                var displayCond = $('#buganimation_display_condition').val();
+                var valid = true;
+
+                // Clear previous errors.
+                clearInlineError($('#buganimation_selected_post_types'));
+                clearInlineError($('#buganimation_selected_posts'));
+
+                if (displayCond === 'specific_post_types') {
+                    var postTypes = $('#buganimation_selected_post_types').val();
+                    if (!postTypes || postTypes.length === 0) {
+                        showInlineError($('#buganimation_selected_post_types'), bugAnimationAdmin.i18n.emptyPostTypes);
+                        valid = false;
+                    }
+                }
+
+                if (displayCond === 'specific_items') {
+                    var items = $('#buganimation_selected_posts').val();
+                    if (!items || items.length === 0) {
+                        showInlineError($('#buganimation_selected_posts'), bugAnimationAdmin.i18n.emptyItems);
+                        valid = false;
+                    }
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Clear inline error when the user makes a selection.
+            $('#buganimation_selected_post_types').on('change', function() {
+                clearInlineError($(this));
+            });
+            $('#buganimation_selected_posts').on('change', function() {
+                clearInlineError($(this));
+            });
         });
     ");
 }
