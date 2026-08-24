@@ -2,7 +2,7 @@
 /*
 Plugin Name: Bug Animation
 Plugin URI: https://github.com/abidkakkur11/Bug-Animation
-Description: Displays animated bugs (flies, spiders, bees, etc.) buzzing across the screen for a fun visual effect.
+Description: Displays animated bugs (flies and spiders) buzzing across the screen for a fun visual effect.
 Version: 1.1.0
 Author: abidkp11
 Author URI: https://profiles.wordpress.org/abidkp11/
@@ -364,7 +364,9 @@ function buganimation_sanitize_selected_post_types( $value ) {
     $sanitized = array_filter( $sanitized ); // Remove any empty entries.
 
     // If the user chose "Specific Post Types", at least one must be selected.
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified by the Settings API (options.php) before any sanitize_callback is invoked.
     $condition = isset( $_POST['buganimation_display_condition'] )
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
         ? sanitize_text_field( wp_unslash( $_POST['buganimation_display_condition'] ) )
         : '';
 
@@ -721,7 +723,7 @@ function buganimation_admin_enqueue_scripts($hook) {
             'emptyItems'     => esc_html__( 'Please select at least one item before saving.', 'bug-animation' ),
         ),
     ) );
-    wp_add_inline_script('select2-js', "
+    wp_add_inline_script( 'select2-js', <<<'JS'
         jQuery(document).ready(function($) {
             // Initialize Basic Select2 for Post Types
             $('#buganimation_selected_post_types').select2();
@@ -746,12 +748,12 @@ function buganimation_admin_enqueue_scripts($hook) {
                 },
                 minimumInputLength: 1
             });
-            
+
             // Toggle Logic
             function toggleFields() {
                 var displayCond = $('#buganimation_display_condition').val();
-                var scheduleCond = $('select[name=\"buganimation_schedule_days\"]').val();
-                
+                var scheduleCond = $('select[name="buganimation_schedule_days"]').val();
+
                 // Display Condition toggles
                 if (displayCond === 'specific_post_types') {
                     $('#buganimation_selected_post_types').closest('tr').show();
@@ -763,36 +765,34 @@ function buganimation_admin_enqueue_scripts($hook) {
                     $('#buganimation_selected_post_types').closest('tr').hide();
                     $('#buganimation_selected_posts').closest('tr').hide();
                 }
-                
+
                 // Schedule Date toggles
                 if (scheduleCond === 'date_range') {
-                    $('input[name=\"buganimation_schedule_start_date\"]').closest('tr').show();
-                    $('input[name=\"buganimation_schedule_end_date\"]').closest('tr').show();
+                    $('input[name="buganimation_schedule_start_date"]').closest('tr').show();
+                    $('input[name="buganimation_schedule_end_date"]').closest('tr').show();
                 } else {
-                    $('input[name=\"buganimation_schedule_start_date\"]').closest('tr').hide();
-                    $('input[name=\"buganimation_schedule_end_date\"]').closest('tr').hide();
+                    $('input[name="buganimation_schedule_start_date"]').closest('tr').hide();
+                    $('input[name="buganimation_schedule_end_date"]').closest('tr').hide();
                 }
-                
+
                 // Time toggles
                 if (scheduleCond === 'always') {
-                    $('input[name=\"buganimation_schedule_start_time\"]').closest('tr').hide();
-                    $('input[name=\"buganimation_schedule_end_time\"]').closest('tr').hide();
+                    $('input[name="buganimation_schedule_start_time"]').closest('tr').hide();
+                    $('input[name="buganimation_schedule_end_time"]').closest('tr').hide();
                 } else {
-                    $('input[name=\"buganimation_schedule_start_time\"]').closest('tr').show();
-                    $('input[name=\"buganimation_schedule_end_time\"]').closest('tr').show();
+                    $('input[name="buganimation_schedule_start_time"]').closest('tr').show();
+                    $('input[name="buganimation_schedule_end_time"]').closest('tr').show();
                 }
             }
-            
-            $('#buganimation_display_condition, select[name=\"buganimation_schedule_days\"]').on('change', toggleFields);
+
+            $('#buganimation_display_condition, select[name="buganimation_schedule_days"]').on('change', toggleFields);
             toggleFields(); // run on load
 
-            // ── Form validation ──────────────────────────────────────────────
+            // ── Form validation ───────────────────────────────────────────────
             function showInlineError($field, message) {
-                // Remove any previous inline error for this field.
                 $field.closest('tr').find('.buganimation-field-error').remove();
-                var $err = $('<p class=\"buganimation-field-error\" style=\"color:#d63638; font-weight:600; margin-top:6px;\"></p>').text(message);
+                var $err = $('<p class="buganimation-field-error" style="color:#d63638; font-weight:600; margin-top:6px;"></p>').text(message);
                 $field.closest('td').append($err);
-                // Highlight the select2 container.
                 $field.next('.select2-container').find('.select2-selection').css('border-color', '#d63638');
                 $('html, body').animate({ scrollTop: $err.offset().top - 120 }, 300);
             }
@@ -802,11 +802,10 @@ function buganimation_admin_enqueue_scripts($hook) {
                 $field.next('.select2-container').find('.select2-selection').css('border-color', '');
             }
 
-            $('form[action=\"options.php\"]').on('submit', function(e) {
+            $('form[action="options.php"]').on('submit', function(e) {
                 var displayCond = $('#buganimation_display_condition').val();
                 var valid = true;
 
-                // Clear previous errors.
                 clearInlineError($('#buganimation_selected_post_types'));
                 clearInlineError($('#buganimation_selected_posts'));
 
@@ -840,7 +839,8 @@ function buganimation_admin_enqueue_scripts($hook) {
                 clearInlineError($(this));
             });
         });
-    ");
+JS
+    );
 }
 add_action('admin_enqueue_scripts', 'buganimation_admin_enqueue_scripts');
 
