@@ -790,7 +790,7 @@ function buganimation_admin_enqueue_scripts($hook) {
             function showInlineError($field, message) {
                 // Remove any previous inline error for this field.
                 $field.closest('tr').find('.buganimation-field-error').remove();
-                var $err = $('<p class="buganimation-field-error" style="color:#d63638; font-weight:600; margin-top:6px;"></p>').text(message);
+                var $err = $('<p class=\"buganimation-field-error\" style=\"color:#d63638; font-weight:600; margin-top:6px;\"></p>').text(message);
                 $field.closest('td').append($err);
                 // Highlight the select2 container.
                 $field.next('.select2-container').find('.select2-selection').css('border-color', '#d63638');
