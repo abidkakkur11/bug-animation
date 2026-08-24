@@ -63,10 +63,16 @@ var BugDispatch = {
         monitorMouseMovement: false,
         eventDistanceToBug: 40,
         minTimeBetweenMultipy: 1000,
-        mouseOver: 'random' // can be 'fly', 'flyoff' (if the bug can fly), die', 'multiply', 'nothing' or 'random'
+        mouseOver: 'random', // can be 'fly', 'flyoff' (if the bug can fly), die', 'multiply', 'nothing' or 'random'
+        bugTypes: ['fly'] // Array of enabled bugs
     },
 
     initialize: function(options) {
+
+        // Respect the OS/browser reduced-motion preference.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
 
         this.options = mergeOptions(this.options, options);
 
@@ -140,15 +146,37 @@ var BugDispatch = {
         var numBugs = (this.options.mouseOver === 'multiply') ? this.options.minBugs : this.random(this.options.minBugs, this.options.maxBugs, true),
             i = 0,
             that = this;
+            
+        var bugTypeConfigs = {
+            'fly': { imageSprite: 'fly-sprite.png', bugWidth: 13, bugHeight: 14, num_frames: 5, canFly: true, canDie: true, numDeathTypes: 3, zoom: 10, minSpeed: 5, maxSpeed: 10, minDelay: 500, maxDelay: 10000 },
+            'spider': { imageSprite: 'spider-sprite.png', bugWidth: 69, bugHeight: 90, num_frames: 7, canFly: false, canDie: true, numDeathTypes: 2, zoom: 6, minSpeed: 6, maxSpeed: 13, minDelay: 200, maxDelay: 3000 }
+        };
+        
+        var availableTypes = this.options.bugTypes || ['fly'];
+        if (!Array.isArray(availableTypes) || availableTypes.length === 0) {
+            availableTypes = ['fly'];
+        }
 
         for (i = 0; i < numBugs; i++) {
             var options = JSON.parse(JSON.stringify(this.options)),
                 b = SpawnBug();
+                
+            var typeIndex = Math.floor(Math.random() * availableTypes.length);
+            var selectedType = availableTypes[typeIndex];
+            var typeConfig = bugTypeConfigs[selectedType] || bugTypeConfigs['fly'];
+            
+            for (var key in typeConfig) {
+                options[key] = typeConfig[key];
+            }
+            
+            if (typeof bugAnimationData !== "undefined") {
+                options.imageSprite = bugAnimationData.pluginUrl + "images/" + options.imageSprite;
+            }
 
-            options.wingsOpen = (this.options.canFly) ? ((Math.random() > 0.5) ? true : false) : true,
-                options.walkSpeed = this.random(this.options.minSpeed, this.options.maxSpeed),
+            options.wingsOpen = (options.canFly) ? ((Math.random() > 0.5) ? true : false) : true;
+            options.walkSpeed = this.random(this.options.minSpeed, this.options.maxSpeed);
 
-                b.initialize(this.transform, options);
+            b.initialize(this.transform, options);
             this.bugs.push(b);
         }
 
@@ -298,7 +326,7 @@ var BugDispatch = {
                     pos = bug.getPos(),
                     that = this;
 
-                options.wingsOpen = (this.options.canFly) ? ((Math.random() > 0.5) ? true : false) : true;
+                options.wingsOpen = (options.canFly) ? ((Math.random() > 0.5) ? true : false) : true;
                 options.walkSpeed = this.random(this.options.minSpeed, this.options.maxSpeed);
 
                 b.initialize(this.transform, options);
@@ -966,14 +994,16 @@ var Bug = {
     },
 
     bug_near_window_edge: function() {
+        var h = document.documentElement.clientHeight,
+            w = document.documentElement.clientWidth;
         this.near_edge = 0;
         if (this.bug.top < this.options.edge_resistance)
             this.near_edge |= this.NEAR_TOP_EDGE;
-        else if (this.bug.top > document.documentElement.clientHeight - this.options.edge_resistance)
+        else if (this.bug.top > h - this.options.edge_resistance)
             this.near_edge |= this.NEAR_BOTTOM_EDGE;
         if (this.bug.left < this.options.edge_resistance)
             this.near_edge |= this.NEAR_LEFT_EDGE;
-        else if (this.bug.left > document.documentElement.clientWidth - this.options.edge_resistance)
+        else if (this.bug.left > w - this.options.edge_resistance)
             this.near_edge |= this.NEAR_RIGHT_EDGE;
         return this.near_edge;
     },
